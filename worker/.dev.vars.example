@@ -1,0 +1,10 @@
+# Local development secrets for wrangler dev
+# Copy this to .dev.vars and fill in your values
+
+ALLOWED_ORIGIN=http://localhost:3000
+IP_HASH_SALT=local-dev-salt-change-me
+EMAIL_TO=petsittingsangiorgioacremano@gmail.com
+SHEET_ID=your-sheet-id-here
+GOOGLE_SERVICE_ACCOUNT_JSON={"type":"service_account","project_id":"your-project"}
+# SENDGRID_API_KEY=SG.xxxxx
+# EMAIL_FROM=noreply@petsittingsgc.it

@@ -1,0 +1,21 @@
+name = "pssg-worker"
+main = "src/index.js"
+compatibility_date = "2024-09-01"
+
+# KV namespace for rate limiting
+[[kv_namespaces]]
+binding = "RATE_KV"
+id = "YOUR_KV_NAMESPACE_ID"          # Replace after: wrangler kv namespace create RATE_KV
+preview_id = "YOUR_KV_PREVIEW_ID"    # Replace after: wrangler kv namespace create RATE_KV --preview
+
+# Secrets (set via: wrangler secret put SECRET_NAME)
+# GOOGLE_SERVICE_ACCOUNT_JSON  - JSON key from Google Cloud service account
+# SHEET_ID                     - Google Sheets spreadsheet ID
+# ALLOWED_ORIGIN               - Frontend URL (e.g. https://petsittingsgc.it)
+# IP_HASH_SALT                 - Random string for hashing IPs
+# EMAIL_TO                     - petsittingsangiorgioacremano@gmail.com
+# SENDGRID_API_KEY             - SendGrid API key for email notifications
+# EMAIL_FROM                   - Verified sender email in SendGrid
+
+[vars]
+ENVIRONMENT = "production"

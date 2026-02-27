@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://petsittingsgc.it/sitemap.xml
