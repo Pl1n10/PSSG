@@ -22,7 +22,7 @@ There is NO user authentication, NO payments, NO database beyond Google Sheets. 
 
 - **Frontend** (`/frontend`): Next.js 14 App Router, static export (`output: 'export'`), Tailwind CSS, deployed on Netlify
 - **Backend** (`/worker`): Cloudflare Worker (ESM), no framework, plain JS modules
-- **Storage**: Google Sheets (3 tabs: `clients`, `sitters`, `mailing_list`), accessed via Sheets API v4 with Service Account JWT
+- **Storage**: Google Sheets (4 tabs: `clients`, `sitters`, `nurse_clients`, `mailing_list`), accessed via Sheets API v4 with Service Account JWT
 - **Email**: SendGrid HTTP API — admin notifications + user confirmation emails (non-blocking, graceful fallback if unconfigured)
 - **Rate limiting**: Cloudflare KV (10 req/hr per IP hash), in-memory Map fallback
 
@@ -31,7 +31,7 @@ There is NO user authentication, NO payments, NO database beyond Google Sheets. 
 - **Static export**: `next.config.js` has `output: 'export'`. No SSR, no API routes in Next.js. All dynamic behavior is client-side.
 - **No external auth libraries**: The Worker does its own JWT signing for Google Sheets using Web Crypto API (`crypto.subtle`). Zero npm dependencies in the worker.
 - **IP hashing**: IPs are SHA-256 hashed with a salt (`IP_HASH_SALT` env) before storage. Only the hash prefix (first 8 bytes hex) is stored. If the salt is missing in production, a warning is logged but the worker continues with a fallback salt.
-- **Honeypot anti-spam**: Hidden `_hp` field in both forms. If filled, request is silently rejected.
+- **Honeypot anti-spam**: Hidden `_hp` field in all forms. If filled, request is silently rejected.
 - **Cooldown**: Client-side 15s cooldown after successful form submit.
 - **CORS + Origin enforcement**: Worker returns CORS headers AND actively rejects POST requests from unauthorized origins with 403. Requests without an Origin header (curl/Postman) are allowed through.
 - **Body size limit**: Requests larger than 10 KB are rejected with 413 before parsing, using both Content-Length header check and actual body length check.
@@ -41,7 +41,7 @@ There is NO user authentication, NO payments, NO database beyond Google Sheets. 
 
 ## Frontend conventions
 
-- **Components**: `/frontend/src/components/*.jsx` — all React functional components
+- **Components**: `/frontend/src/components/*.jsx` — all React functional components. Nurse-specific components in `/frontend/src/components/nurse/*.jsx`.
 - **Styling**: Tailwind utility classes. Custom theme in `tailwind.config.js` with `brand` (orange), `sage` (green), `cream`, `warmgray` color palettes.
 - **Fonts**: DM Serif Display (headings) + DM Sans (body), loaded via Google Fonts CSS import in `globals.css`.
 - **Form state**: Each form manages its own state with `useState`. States: `idle` → `loading` → `success` | `error`.
@@ -93,6 +93,8 @@ KV binding: `RATE_KV` (defined in `wrangler.toml`)
 **Tab `clients`**: timestamp, type, ip_hash, user_agent, nome, zona, telefono, email, animale, servizio, quando, note
 
 **Tab `sitters`**: timestamp, type, ip_hash, user_agent, nome, zona, telefono, email, servizi, esperienza, comp_vet, comp_vet_dettaglio, disponibilita, link_profilo, note
+
+**Tab `nurse_clients`**: timestamp, type, ip_hash, user_agent, nome, zona, telefono, email, animale, patologia, farmaco, frequenza, urgenza, note
 
 **Tab `mailing_list`**: timestamp, email, nome, tipo, telefono
 
@@ -151,9 +153,19 @@ cd frontend && git push
 - Disclaimer is mandatory in the footer: PSSG connects people, does not provide the service
 - Privacy page at `/privacy/` covers GDPR basics
 
+## Pages
+
+| Route | Description | Components |
+|-------|-------------|------------|
+| `/` | Landing page principale — pet sitting generico | Hero, HowItWorks, WhyTrustUs, FormCliente, FormSitter, FAQ, Footer |
+| `/nurse/` | Landing page pet nursing — QR fuori cliniche vet | HeroNurse, HowItWorksNurse, WhyTrustUsNurse, FormNurseClient, FAQ, Footer |
+| `/privacy/` | Privacy policy GDPR | Static content |
+
+The `/nurse/` page targets pet owners at veterinary clinics who need specialized care (medication administration, post-op care, chronic conditions). It uses a dedicated form with `type: 'nurse_client'` that collects patologia, farmaco, frequenza, and urgenza fields. The worker validates this type separately and writes to the `nurse_clients` Google Sheet tab.
+
 ## Email system
 
-The worker sends two types of email via SendGrid:
+The worker sends two types of email via SendGrid for each lead type (client, sitter, nurse_client):
 
 1. **Admin notification** (`sendNotification`) — sent to `EMAIL_TO` when a new lead arrives. Contains full form data + link to Google Sheet.
 2. **User confirmation** (`sendConfirmation`) — sent to the user's email address. Contains a summary of their request and "we'll contact you on WhatsApp within 48h".

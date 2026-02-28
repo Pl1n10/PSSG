@@ -146,6 +146,24 @@ export async function saveToSheets(env, type, payload, ipHash, userAgent) {
       payload.note || '',
     ]
     await appendRow(accessToken, env.SHEET_ID, 'clients', values)
+  } else if (type === 'nurse_client') {
+    const values = [
+      timestamp,
+      'nurse_client',
+      ipHash,
+      userAgent || '',
+      payload.nome || '',
+      payload.zona || '',
+      payload.telefono || '',
+      payload.email || '',
+      payload.animale || '',
+      payload.patologia || '',
+      payload.farmaco || '',
+      payload.frequenza || '',
+      payload.urgenza || '',
+      payload.note || '',
+    ]
+    await appendRow(accessToken, env.SHEET_ID, 'nurse_clients', values)
   } else {
     const values = [
       timestamp,

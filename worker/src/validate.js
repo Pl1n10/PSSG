@@ -12,14 +12,16 @@ const VALID_SERVIZI_SITTER = [
   'dog_walking', 'cat_sitting', 'visite_domicilio',
   'somministrazione_farmaci', 'altro',
 ]
+const VALID_FREQUENZE = ['giornaliera', 'settimanale', 'al_bisogno', 'altro']
+const VALID_URGENZE = ['urgente_24h', 'entro_settimana', 'programmabile']
 
 export function validateLead(body) {
   // Type check
   if (!body || !body.type) {
     return { valid: false, error: 'Campo "type" obbligatorio.' }
   }
-  if (!['client', 'sitter'].includes(body.type)) {
-    return { valid: false, error: 'Tipo non valido. Usa "client" o "sitter".' }
+  if (!['client', 'sitter', 'nurse_client'].includes(body.type)) {
+    return { valid: false, error: 'Tipo non valido.' }
   }
 
   const p = body.payload
@@ -85,6 +87,25 @@ export function validateLead(body) {
     }
     if (!p.disponibilita || !p.disponibilita.trim()) {
       return { valid: false, error: 'Indica la tua disponibilità.' }
+    }
+  }
+
+  // --- Nurse client-specific ---
+  if (body.type === 'nurse_client') {
+    if (!p.animale || !VALID_ANIMALI.includes(p.animale)) {
+      return { valid: false, error: 'Seleziona un tipo di animale valido.' }
+    }
+    if (!p.patologia || !p.patologia.trim()) {
+      return { valid: false, error: 'Descrivi la patologia del tuo animale.' }
+    }
+    if (!p.farmaco || !p.farmaco.trim()) {
+      return { valid: false, error: 'Indica il farmaco o trattamento necessario.' }
+    }
+    if (!p.frequenza || !VALID_FREQUENZE.includes(p.frequenza)) {
+      return { valid: false, error: 'Seleziona una frequenza valida.' }
+    }
+    if (!p.urgenza || !VALID_URGENZE.includes(p.urgenza)) {
+      return { valid: false, error: 'Seleziona un livello di urgenza valido.' }
     }
   }
 

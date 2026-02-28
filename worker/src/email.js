@@ -18,6 +18,19 @@ const ANIMALI_LABELS = {
   altro: 'Altro',
 }
 
+const FREQUENZE_LABELS = {
+  giornaliera: 'Giornaliera',
+  settimanale: 'Settimanale',
+  al_bisogno: 'Al bisogno',
+  altro: 'Altro',
+}
+
+const URGENZE_LABELS = {
+  urgente_24h: 'Urgente (entro 24h)',
+  entro_settimana: 'Entro questa settimana',
+  programmabile: 'Programmabile',
+}
+
 function buildClientEmail(payload, sheetUrl) {
   const animale = ANIMALI_LABELS[payload.animale] || payload.animale
   const servizio = SERVIZI_LABELS[payload.servizio] || payload.servizio
@@ -57,6 +70,30 @@ Esperienza: ${payload.esperienza}
 Competenze veterinarie: ${payload.competenze_vet === 'si' ? `Sì — ${payload.competenze_vet_dettaglio || 'non specificato'}` : 'No'}
 Disponibilità: ${payload.disponibilita}
 Link profilo: ${payload.link_profilo || '—'}
+Note: ${payload.note || '—'}
+
+📋 Google Sheet: ${sheetUrl}`,
+  }
+}
+
+function buildNurseClientEmail(payload, sheetUrl) {
+  const animale = ANIMALI_LABELS[payload.animale] || payload.animale
+  const frequenza = FREQUENZE_LABELS[payload.frequenza] || payload.frequenza
+  const urgenza = URGENZE_LABELS[payload.urgenza] || payload.urgenza
+
+  return {
+    subject: '[PSSG] 🩺 Nuova richiesta PET NURSE',
+    body: `Nuova richiesta PET NURSE
+
+Nome: ${payload.nome}
+Zona: ${payload.zona || 'San Giorgio a Cremano'}
+Telefono: ${payload.telefono}
+Email: ${payload.email}
+Animale: ${animale}
+Patologia: ${payload.patologia}
+Farmaco/trattamento: ${payload.farmaco}
+Frequenza: ${frequenza}
+Urgenza: ${urgenza}
 Note: ${payload.note || '—'}
 
 📋 Google Sheet: ${sheetUrl}`,
@@ -111,6 +148,30 @@ Il team PSSG — Pet Sitting San Giorgio a Cremano`,
   }
 }
 
+function buildNurseClientConfirmation(payload) {
+  const animale = ANIMALI_LABELS[payload.animale] || payload.animale
+  const frequenza = FREQUENZE_LABELS[payload.frequenza] || payload.frequenza
+
+  return {
+    subject: 'PSSG — Richiesta pet nurse ricevuta!',
+    body: `Ciao ${payload.nome}!
+
+Abbiamo ricevuto la tua richiesta di pet nurse a domicilio. Ecco un riepilogo:
+
+Animale: ${animale}
+Patologia: ${payload.patologia}
+Farmaco/trattamento: ${payload.farmaco}
+Frequenza: ${frequenza}
+Zona: ${payload.zona || 'San Giorgio a Cremano'}
+
+Cosa succede adesso?
+Stiamo cercando il professionista giusto per il tuo animale. Ti contatteremo su WhatsApp al numero ${payload.telefono} entro 48 ore.
+
+A presto!
+Il team PSSG — Pet Sitting San Giorgio a Cremano`,
+  }
+}
+
 /**
  * Send confirmation email to the user.
  */
@@ -126,10 +187,15 @@ export async function sendConfirmation(env, type, payload) {
 
   const emailFrom = env.EMAIL_FROM || 'noreply@petsittingsgc.it'
 
-  const { subject, body } =
-    type === 'client'
-      ? buildClientConfirmation(payload)
-      : buildSitterConfirmation(payload)
+  let emailContent
+  if (type === 'client') {
+    emailContent = buildClientConfirmation(payload)
+  } else if (type === 'nurse_client') {
+    emailContent = buildNurseClientConfirmation(payload)
+  } else {
+    emailContent = buildSitterConfirmation(payload)
+  }
+  const { subject, body } = emailContent
 
   const res = await fetch('https://api.sendgrid.com/v3/mail/send', {
     method: 'POST',
@@ -177,10 +243,15 @@ export async function sendNotification(env, type, payload) {
   const emailFrom = env.EMAIL_FROM || 'noreply@petsittingsgc.it'
   const sheetUrl = `https://docs.google.com/spreadsheets/d/${env.SHEET_ID || 'SHEET_ID'}`
 
-  const { subject, body } =
-    type === 'client'
-      ? buildClientEmail(payload, sheetUrl)
-      : buildSitterEmail(payload, sheetUrl)
+  let notifContent
+  if (type === 'client') {
+    notifContent = buildClientEmail(payload, sheetUrl)
+  } else if (type === 'nurse_client') {
+    notifContent = buildNurseClientEmail(payload, sheetUrl)
+  } else {
+    notifContent = buildSitterEmail(payload, sheetUrl)
+  }
+  const { subject, body } = notifContent
 
   const res = await fetch('https://api.sendgrid.com/v3/mail/send', {
     method: 'POST',
