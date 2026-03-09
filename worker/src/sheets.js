@@ -94,6 +94,29 @@ async function getAccessToken(serviceAccount) {
 // --- Sheets API ---
 
 /**
+ * Read all rows from a Google Sheet tab.
+ * Returns array of string arrays (first row = headers).
+ */
+async function readRows(accessToken, sheetId, tab) {
+  const range = `${tab}!A:Z`
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(range)}`
+
+  const res = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  })
+
+  if (!res.ok) {
+    const text = await res.text()
+    throw new Error(`Sheets read failed: ${res.status} ${text}`)
+  }
+
+  const data = await res.json()
+  return data.values || []
+}
+
+/**
  * Append a row to a Google Sheet tab.
  */
 async function appendRow(accessToken, sheetId, tab, values) {
@@ -184,6 +207,38 @@ export async function saveToSheets(env, type, payload, ipHash, userAgent) {
     ]
     await appendRow(accessToken, env.SHEET_ID, 'sitters', values)
   }
+}
+
+/**
+ * Read all sitters from Google Sheets and return as structured objects.
+ * Skips header row. Returns [] if tab is empty.
+ *
+ * Columns: 0=timestamp, 1=type, 2=ip_hash, 3=user_agent, 4=nome,
+ *   5=zona, 6=telefono, 7=email, 8=servizi, 9=esperienza,
+ *   10=comp_vet, 11=comp_vet_dettaglio, 12=disponibilita,
+ *   13=link_profilo, 14=note
+ */
+export async function readSitters(env) {
+  const serviceAccount = JSON.parse(env.GOOGLE_SERVICE_ACCOUNT_JSON)
+  const accessToken = await getAccessToken(serviceAccount)
+
+  const rows = await readRows(accessToken, env.SHEET_ID, 'sitters')
+
+  // Skip header row, parse remaining rows into objects
+  if (rows.length <= 1) return []
+
+  return rows.slice(1).map((row) => ({
+    timestamp: row[0] || '',
+    nome: row[4] || '',
+    zona: row[5] || '',
+    telefono: row[6] || '',
+    email: row[7] || '',
+    servizi: row[8] || '',
+    esperienza: row[9] || '',
+    comp_vet: row[10] || '',
+    comp_vet_dettaglio: row[11] || '',
+    disponibilita: row[12] || '',
+  }))
 }
 
 /**

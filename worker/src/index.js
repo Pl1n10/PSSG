@@ -8,6 +8,7 @@ import { validateLead } from './validate.js'
 import { checkRateLimit } from './rate-limit.js'
 import { saveToSheets, saveToMailingList } from './sheets.js'
 import { sendNotification, sendConfirmation } from './email.js'
+import { matchAndNotify } from './match.js'
 
 /** Max request body size in bytes (10 KB). */
 const MAX_BODY_BYTES = 10 * 1024
@@ -128,6 +129,13 @@ async function handleLead(request, env, ctx) {
         } catch (err) {
           console.error(`[bg] Mailing list error: ${err.message}`)
         }
+      }
+
+      // Auto-matching + Telegram notification
+      try {
+        await matchAndNotify(env, body.type, body.payload)
+      } catch (err) {
+        console.error(`[bg] Match+Telegram error: ${err.message}`)
       }
     })()
   )
