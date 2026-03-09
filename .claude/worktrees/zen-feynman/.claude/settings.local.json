@@ -1,8 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(git add CLAUDE.md frontend/src/app/nurse/ frontend/src/components/nurse/ sheets/nurse_clients.csv frontend/src/components/FormCliente.jsx frontend/src/components/FormSitter.jsx worker/src/index.js)",
-      "Bash(git commit:*)"
-    ]
-  }
-}
