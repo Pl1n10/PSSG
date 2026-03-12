@@ -11,7 +11,7 @@ const SERVIZI_OPTIONS = [
 ]
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8787'
-const WA_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '393331112222'
+const WA_NUMBER = (process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '393331112222').replace(/[\s+\-]/g, '')
 
 export default function FormSitter() {
   const [form, setForm] = useState({

@@ -1,4 +1,4 @@
-const WA_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '393331112222'
+const WA_NUMBER = (process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '393331112222').replace(/[\s+\-]/g, '')
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://petsittingsgc.it'
 
 export default function JsonLd() {

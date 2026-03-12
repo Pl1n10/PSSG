@@ -1,6 +1,6 @@
 'use client'
 
-const WA_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '393331112222'
+const WA_NUMBER = (process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '393331112222').replace(/[\s+\-]/g, '')
 
 export default function WhatsAppFloat() {
   const message = encodeURIComponent(
